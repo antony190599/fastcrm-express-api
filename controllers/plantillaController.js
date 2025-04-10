@@ -2,8 +2,14 @@ const Plantilla = require('../models/Plantilla');
 
 // GET all templates
 exports.getAllTemplates = async (req, res) => {
+  const { q } = req.query;
+
   try {
-    const templates = await Plantilla.find();
+    const query = q
+      ? { content: { $regex: q, $options: 'i' } } // Search by keyword if 'q' is provided
+      : {}; // Otherwise, return all templates
+
+    const templates = await Plantilla.find(query);
     res.status(200).json(templates);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching templates', error });

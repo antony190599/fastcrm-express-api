@@ -1,10 +1,12 @@
 const express = require('express');
 const mongoose = require('mongoose');
 require('dotenv').config();
+const { corsMiddleware } = require('./middleware/corsmiddleware'); // Correct casing
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(corsMiddleware); // Use corsMiddleware
 // Middleware para parsear JSON
 app.use(express.json());
 

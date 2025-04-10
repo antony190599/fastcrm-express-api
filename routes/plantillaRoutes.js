@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const plantillaController = require('../controllers/plantillaController');
 
-// GET all templates
+// GET all templates (supports optional keyword search with query parameter 'q')
 router.get('/', plantillaController.getAllTemplates);
 
 // POST a new template
