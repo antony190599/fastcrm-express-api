@@ -1,6 +1,6 @@
 import express from 'express';
 import * as plantillaController from '../controllers/plantillaController.js';
-import { validate } from '../middleware/requestValidationMiddleware.js';
+import { validate } from '../middleware/requestValidation.middleware.js';
 import {
   validateGetTemplates,
   validateCreateTemplate,

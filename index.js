@@ -1,8 +1,8 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import { corsMiddleware } from './middleware/corsmiddleware.js';
-import { errorHandlerMiddleware } from './middleware/errorHandlerMiddleware.js';
+import { corsMiddleware } from './middleware/cors.middleware.js';
+import { errorHandlerMiddleware } from './middleware/errorHandler.middleware.js';
 import plantillaRoutes from './routes/plantillaRoutes.js';
 
 dotenv.config();
