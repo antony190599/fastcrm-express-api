@@ -1,12 +1,15 @@
 import Plantilla from '../models/Plantilla.js';
 
 export const getAllTemplates = async (query, type) => {
+    console.log('Getting all templates with query:', query, 'and type:', type);
   const filter = {
     ...(query && { content: { $regex: query, $options: 'i' } }),
     ...(type && { type }),
   };
   const queryExecution = Plantilla.find(filter);
-  const explainResult = await queryExecution.explain('executionStats'); // Evaluate performance
+  // clone the query to avoid modifying the original one
+  const clonedQuery = queryExecution.clone();
+  const explainResult = await clonedQuery.explain('executionStats'); // Evaluate performance
   console.log('Query Performance:', explainResult); // Log performance details
   return await queryExecution;
 };

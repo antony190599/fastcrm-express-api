@@ -1,13 +1,16 @@
 import { successResponse, errorResponse } from '../utils/responseFormatter.js';
 import * as plantillaService from '../services/plantillaService.js';
+import { TemplateResponseDTO } from '../src/dtos/TemplateResponseDTO.js';
 
 export const getAllTemplates = async (req, res) => {
   const { q, type } = req.query;
 
   try {
     const templates = await plantillaService.getAllTemplates(q, type);
-    res.status(200).json(successResponse(templates, 'Templates fetched successfully'));
+    const formattedTemplates = templates.map(template => new TemplateResponseDTO(template));
+    res.status(200).json(successResponse(formattedTemplates, 'Templates fetched successfully'));
   } catch (error) {
+    console.log(error);
     res.status(500).json(errorResponse('Error fetching templates', [error.message]));
   }
 };
@@ -21,7 +24,8 @@ export const createTemplate = async (req, res) => {
 
   try {
     const newTemplate = await plantillaService.createTemplate({ type, content, labels, author });
-    res.status(201).json(successResponse(newTemplate, 'Template created successfully'));
+    const formattedTemplate = new TemplateResponseDTO(newTemplate);
+    res.status(201).json(successResponse(formattedTemplate, 'Template created successfully'));
   } catch (error) {
     res.status(500).json(errorResponse('Error creating template', [error.message]));
   }
@@ -42,7 +46,8 @@ export const updateTemplate = async (req, res) => {
       return res.status(404).json(errorResponse('Template not found'));
     }
 
-    res.status(200).json(successResponse(updatedTemplate, 'Template updated successfully'));
+    const formattedTemplate = new TemplateResponseDTO(updatedTemplate);
+    res.status(200).json(successResponse(formattedTemplate, 'Template updated successfully'));
   } catch (error) {
     res.status(500).json(errorResponse('Error updating template', [error.message]));
   }

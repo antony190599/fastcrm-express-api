@@ -9,8 +9,8 @@ export const validateGetTemplates = [
     .withMessage('Query must be at least 2 characters long'),
   query('type')
     .optional()
-    .isIn(['seguimiento', 'bienvenida'])
-    .withMessage('Type must be either "seguimiento" or "bienvenida"'),
+    .isString()
+    .withMessage('error'),
 ];
 
 export const validateCreateTemplate = [
