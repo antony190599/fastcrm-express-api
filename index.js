@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 require('dotenv').config();
 const { corsMiddleware } = require('./middleware/corsmiddleware'); // Correct casing
+const { errorHandlerMiddleware } = require('./middleware/errorHandlerMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,6 +26,9 @@ app.use('/api/templates', plantillaRoutes);
 app.get('/', (req, res) => {
   res.send('API funcionando correctamente');
 });
+
+// Middleware de manejo de errores global
+app.use(errorHandlerMiddleware);
 
 app.listen(PORT, () => {
   console.log(`Servidor escuchando en el puerto ${PORT}`);
