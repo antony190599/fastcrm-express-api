@@ -1,20 +1,18 @@
-const { successResponse, errorResponse } = require('../utils/responseFormatter');
-const plantillaService = require('../services/plantillaService');
+import { successResponse, errorResponse } from '../utils/responseFormatter.js';
+import * as plantillaService from '../services/plantillaService.js';
 
-// GET all templates
-exports.getAllTemplates = async (req, res) => {
-  const { q } = req.query;
+export const getAllTemplates = async (req, res) => {
+  const { q, type } = req.query;
 
   try {
-    const templates = await plantillaService.getAllTemplates(q);
+    const templates = await plantillaService.getAllTemplates(q, type);
     res.status(200).json(successResponse(templates, 'Templates fetched successfully'));
   } catch (error) {
     res.status(500).json(errorResponse('Error fetching templates', [error.message]));
   }
 };
 
-// POST a new template
-exports.createTemplate = async (req, res) => {
+export const createTemplate = async (req, res) => {
   const { type, content, labels, author } = req.body || {};
 
   if (!type || !content || !author) {
@@ -29,8 +27,7 @@ exports.createTemplate = async (req, res) => {
   }
 };
 
-// PUT (update) a template by ID
-exports.updateTemplate = async (req, res) => {
+export const updateTemplate = async (req, res) => {
   const { id } = req.params;
   const { type, content, labels, author } = req.body;
 
@@ -51,8 +48,7 @@ exports.updateTemplate = async (req, res) => {
   }
 };
 
-// DELETE a template by ID
-exports.deleteTemplate = async (req, res) => {
+export const deleteTemplate = async (req, res) => {
   const { id } = req.params;
 
   try {

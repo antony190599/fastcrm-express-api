@@ -1,8 +1,6 @@
-const { errorResponse } = require('../utils/responseFormatter');
+import { errorResponse } from '../utils/responseFormatter.js';
 
-const errorHandlerMiddleware = (err, req, res, next) => {
-  console.error(err.stack); // Log the error stack for debugging
+export const errorHandlerMiddleware = (err, req, res, next) => {
+  console.error(err.stack);
   res.status(500).json(errorResponse('Internal Server Error', [err.message]));
 };
-
-module.exports = { errorHandlerMiddleware };

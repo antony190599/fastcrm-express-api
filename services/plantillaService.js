@@ -1,18 +1,22 @@
-const Plantilla = require('../models/Plantilla');
+import Plantilla from '../models/Plantilla.js';
 
-exports.getAllTemplates = async (query) => {
-  const filter = query
-    ? { content: { $regex: query, $options: 'i' } }
-    : {};
-  return await Plantilla.find(filter);
+export const getAllTemplates = async (query, type) => {
+  const filter = {
+    ...(query && { content: { $regex: query, $options: 'i' } }),
+    ...(type && { type }),
+  };
+  const queryExecution = Plantilla.find(filter);
+  const explainResult = await queryExecution.explain('executionStats'); // Evaluate performance
+  console.log('Query Performance:', explainResult); // Log performance details
+  return await queryExecution;
 };
 
-exports.createTemplate = async (data) => {
+export const createTemplate = async (data) => {
   const newTemplate = new Plantilla(data);
   return await newTemplate.save();
 };
 
-exports.updateTemplate = async (id, data) => {
+export const updateTemplate = async (id, data) => {
   return await Plantilla.findByIdAndUpdate(
     id,
     data,
@@ -20,6 +24,6 @@ exports.updateTemplate = async (id, data) => {
   );
 };
 
-exports.deleteTemplate = async (id) => {
+export const deleteTemplate = async (id) => {
   return await Plantilla.findByIdAndDelete(id);
 };
