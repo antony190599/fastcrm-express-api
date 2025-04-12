@@ -30,3 +30,7 @@ export const updateTemplate = async (id, data) => {
 export const deleteTemplate = async (id) => {
   return await Plantilla.findByIdAndDelete(id);
 };
+
+export const getTemplateById = async (id) => {
+  return await Plantilla.findById(id);
+};

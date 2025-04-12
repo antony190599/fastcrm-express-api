@@ -68,3 +68,20 @@ export const deleteTemplate = async (req, res) => {
     res.status(500).json(errorResponse('Error deleting template', [error.message]));
   }
 };
+
+export const getTemplateById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const template = await plantillaService.getTemplateById(id);
+
+    if (!template) {
+      return res.status(404).json(errorResponse('Template not found'));
+    }
+
+    const formattedTemplate = new TemplateResponseDTO(template);
+    res.status(200).json(successResponse(formattedTemplate, 'Template fetched successfully'));
+  } catch (error) {
+    res.status(500).json(errorResponse('Error fetching template', [error.message]));
+  }
+};

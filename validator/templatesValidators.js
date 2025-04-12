@@ -25,3 +25,7 @@ export const validateUpdateTemplate = [
   body('content').notEmpty().withMessage('Content is required'),
   body('author').notEmpty().withMessage('Author is required'),
 ];
+
+export const validateGetTemplate = [
+  param('id').isMongoId().withMessage('Invalid template ID'),
+];
