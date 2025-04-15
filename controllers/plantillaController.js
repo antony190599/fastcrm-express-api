@@ -1,6 +1,6 @@
 import { successResponse, errorResponse } from '../utils/responseFormatter.js';
 import * as plantillaService from '../services/plantillaService.js';
-import { TemplateResponseDTO } from '../src/dtos/TemplateResponseDTO.js';
+import { TemplateResponseDTO } from '../dtos/TemplateResponseDTO.js';
 
 export const getAllTemplates = async (req, res) => {
   const { q, type } = req.query;
