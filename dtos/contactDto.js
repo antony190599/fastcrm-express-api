@@ -12,7 +12,7 @@ export const toContactDto = (contact) => {
       lastName: contact.lastName,
       email: contact.email,
       phone: contact.phone,
-      position: contact.position,
+      title: contact.title, // Changed from position to title to match the database schema
       companyId: contact.companyId,
       company: contact.company ? {
         id: contact.company.id,
@@ -32,4 +32,3 @@ export const toContactDto = (contact) => {
     if (!contacts) return [];
     return contacts.map(contact => toContactDto(contact));
   };
-  

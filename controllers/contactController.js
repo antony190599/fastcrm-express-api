@@ -4,7 +4,10 @@ import { toContactDto, toContactDtoList } from '../dtos/contactDto.js';
 
 export const getAllContacts = async (req, res) => {
   try {
-    const contacts = await contactService.getAllContacts();
+    // Extrae orderBy de query params, con valor predeterminado vacío
+    const { orderBy = '' } = req.query;
+    
+    const contacts = await contactService.getAllContacts(orderBy);
     const contactDtos = toContactDtoList(contacts);
     res.json(successResponse(contactDtos, 'Contacts fetched successfully'));
   } catch (error) {

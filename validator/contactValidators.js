@@ -1,4 +1,4 @@
-import { param, body } from "express-validator";
+import { param, body, query } from "express-validator";
 
 export const validateCreateContact = [
   body("firstName").notEmpty().withMessage("First name is required"),
@@ -29,4 +29,11 @@ export const validateUpdateContact = [
 
 export const validateGetContact = [
   param("id").isUUID().withMessage("Invalid contact ID"),
+];
+
+export const validateGetContacts = [
+  query("orderBy")
+    .optional()
+    .isIn(['company', ''])
+    .withMessage("orderBy must be 'company' if provided")
 ];

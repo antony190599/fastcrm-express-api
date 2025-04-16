@@ -1,9 +1,30 @@
 import prisma from '../lib/prisma.js';
 
-export const getAllContacts = async () => {
-  return await prisma.contact.findMany({
-    include: { company: true }
+export const getAllContacts = async (orderBy) => {
+  // Define ordering options based on the orderBy parameter
+  let orderOptions = [];
+  
+  if (orderBy === 'company') {
+    // For company ordering, we need to use the correct format for orderBy with relations
+    orderOptions = [
+      { company: { name: 'asc' } },
+      { lastName: 'asc' },
+      { firstName: 'asc' }
+    ];
+  } else {
+    // Default ordering by lastName and firstName
+    orderOptions = [
+      { lastName: 'asc' },
+      { firstName: 'asc' }
+    ];
+  }
+  
+  const contacts = await prisma.contact.findMany({
+    include: { company: true },
+    orderBy: orderOptions
   });
+  
+  return contacts;
 };
 
 export const getContactById = async (id) => {
