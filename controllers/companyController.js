@@ -32,11 +32,12 @@ export const getCompanyById = async (req, res) => {
 };
 
 export const createCompany = async (req, res) => {
-  const { name, industry, website, address } = req.body;
+  const { name, ruc, industry, website, address } = req.body;
   
   try {
     const company = await companyService.createCompany({
       name,
+      ruc,
       industry,
       website,
       address
@@ -52,11 +53,12 @@ export const createCompany = async (req, res) => {
 
 export const updateCompany = async (req, res) => {
   const { id } = req.params;
-  const { name, industry, website, address } = req.body;
+  const { name, ruc, industry, website, address } = req.body;
   
   try {
     const company = await companyService.updateCompany(id, {
       name,
+      ruc,
       industry,
       website,
       address

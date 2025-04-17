@@ -2,6 +2,7 @@ import { param, body } from 'express-validator';
 
 export const validateCreateCompany = [
   body('name').notEmpty().withMessage('Company name is required'),
+  body('ruc').optional().isString().withMessage('RUC must be a string'),
   body('industry').optional().isString().withMessage('Industry must be a string'),
   body('website').optional().isURL().withMessage('Website must be a valid URL'),
   body('address').optional().isString().withMessage('Address must be a string')
@@ -10,6 +11,7 @@ export const validateCreateCompany = [
 export const validateUpdateCompany = [
   param('id').isUUID().withMessage('Invalid company ID'),
   body('name').notEmpty().withMessage('Company name is required'),
+  body('ruc').optional().isString().withMessage('RUC must be a string'),
   body('industry').optional().isString().withMessage('Industry must be a string'),
   body('website').optional().isURL().withMessage('Website must be a valid URL'),
   body('address').optional().isString().withMessage('Address must be a string')

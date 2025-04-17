@@ -14,11 +14,12 @@ export const getCompanyById = async (id) => {
 };
 
 export const createCompany = async (companyData) => {
-  const { name, industry, website, address } = companyData;
+  const { name, ruc, industry, website, address } = companyData;
   
   return await prisma.company.create({
     data: {
       name,
+      ruc,
       industry,
       website,
       address
@@ -33,6 +34,7 @@ export const updateCompany = async (id, companyData) => {
     where: { id },
     data: {
       name,
+      ruc,
       industry,
       website,
       address

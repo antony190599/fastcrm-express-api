@@ -29,6 +29,7 @@ model Contact {
 model Company {
   id        String    @id @default(uuid())
   name      String
+  ruc       String?
   industry  String?
   website   String?
   address   String?
