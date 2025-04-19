@@ -1,17 +1,28 @@
 import Plantilla from '../models/Plantilla.js';
 
-export const getAllTemplates = async (query, type) => {
-    console.log('Getting all templates with query:', query, 'and type:', type);
+export const getAllTemplates = async (query, type, pagination) => {
+  console.log('Getting all templates with query:', query, 'and type:', type);
   const filter = {
     ...(query && { content: { $regex: query, $options: 'i' } }),
     ...(type && { type }),
   };
-  const queryExecution = Plantilla.find(filter);
+  
+  // Get total count for pagination
+  const total = await Plantilla.countDocuments(filter);
+  
+  // Get paginated templates
+  const queryExecution = Plantilla.find(filter)
+    .skip(pagination.skip)
+    .limit(pagination.limit);
+    
   // clone the query to avoid modifying the original one
   const clonedQuery = queryExecution.clone();
   const explainResult = await clonedQuery.explain('executionStats'); // Evaluate performance
   console.log('Query Performance:', explainResult); // Log performance details
-  return await queryExecution;
+  
+  const templates = await queryExecution;
+  
+  return { templates, total };
 };
 
 export const createTemplate = async (data) => {

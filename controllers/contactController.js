@@ -1,15 +1,25 @@
 import * as contactService from '../services/contactService.js';
 import { successResponse, errorResponse } from '../utils/responseFormatter.js';
 import { toContactDto, toContactDtoList } from '../dtos/contactDto.js';
+import { getPaginationParams, createPaginationMeta } from '../utils/paginationUtils.js';
 
 export const getAllContacts = async (req, res) => {
   try {
-    // Extrae orderBy de query params, con valor predeterminado vacío
+    // Extract orderBy and pagination parameters
     const { orderBy = '' } = req.query;
+    const pagination = getPaginationParams(req.query);
     
-    const contacts = await contactService.getAllContacts(orderBy);
+    const { contacts, total } = await contactService.getAllContacts(orderBy, pagination);
     const contactDtos = toContactDtoList(contacts);
-    res.json(successResponse(contactDtos, 'Contacts fetched successfully'));
+    
+    // Create pagination metadata
+    const paginationMeta = createPaginationMeta(pagination.page, pagination.limit, total);
+    
+    res.json(successResponse(
+      contactDtos, 
+      'Contacts fetched successfully',
+      { pagination: paginationMeta }
+    ));
   } catch (error) {
     console.error(error);
     res.status(500).json(errorResponse('Error fetching contacts', [error.message]));

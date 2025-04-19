@@ -1,6 +1,6 @@
 import prisma from '../lib/prisma.js';
 
-export const getAllContacts = async (orderBy) => {
+export const getAllContacts = async (orderBy, pagination) => {
   // Define ordering options based on the orderBy parameter
   let orderOptions = [];
   
@@ -19,12 +19,18 @@ export const getAllContacts = async (orderBy) => {
     ];
   }
   
+  // Get total count for pagination
+  const total = await prisma.contact.count();
+  
+  // Get paginated contacts
   const contacts = await prisma.contact.findMany({
     include: { company: true },
-    orderBy: orderOptions
+    orderBy: orderOptions,
+    skip: pagination.skip,
+    take: pagination.limit
   });
   
-  return contacts;
+  return { contacts, total };
 };
 
 export const getContactById = async (id) => {

@@ -1,14 +1,24 @@
 import { successResponse, errorResponse } from '../utils/responseFormatter.js';
 import * as plantillaService from '../services/plantillaService.js';
 import { TemplateResponseDTO } from '../dtos/TemplateResponseDTO.js';
+import { getPaginationParams, createPaginationMeta } from '../utils/paginationUtils.js';
 
 export const getAllTemplates = async (req, res) => {
   const { q, type } = req.query;
+  const pagination = getPaginationParams(req.query);
 
   try {
-    const templates = await plantillaService.getAllTemplates(q, type);
+    const { templates, total } = await plantillaService.getAllTemplates(q, type, pagination);
     const formattedTemplates = templates.map(template => new TemplateResponseDTO(template));
-    res.status(200).json(successResponse(formattedTemplates, 'Templates fetched successfully'));
+    
+    // Create pagination metadata
+    const paginationMeta = createPaginationMeta(pagination.page, pagination.limit, total);
+    
+    res.status(200).json(successResponse(
+      formattedTemplates, 
+      'Templates fetched successfully',
+      { pagination: paginationMeta }
+    ));
   } catch (error) {
     console.log(error);
     res.status(500).json(errorResponse('Error fetching templates', [error.message]));
@@ -82,6 +92,6 @@ export const getTemplateById = async (req, res) => {
     const formattedTemplate = new TemplateResponseDTO(template);
     res.status(200).json(successResponse(formattedTemplate, 'Template fetched successfully'));
   } catch (error) {
-    res.status(500).json(errorResponse('Error fetching template', [error.message]));
+    res.status (500).json(errorResponse('Error fetching template', [error.message]));
   }
 };
