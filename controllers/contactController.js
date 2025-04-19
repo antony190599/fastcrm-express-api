@@ -83,3 +83,25 @@ export const deleteContact = async (req, res) => {
     res.status(500).json(errorResponse('Error deleting contact', [error.message]));
   }
 };
+
+// Add a new search function
+export const searchContacts = async (req, res) => {
+  try {
+    const { query } = req.query;
+    
+    if (!query || query.length < 2) {
+      return res.status(400).json(errorResponse('Search query must be at least 2 characters', []));
+    }
+    
+    const contacts = await contactService.searchContacts(query);
+    const contactDtos = toContactDtoList(contacts);
+    
+    res.json(successResponse(
+      contactDtos,
+      'Contacts search completed successfully'
+    ));
+  } catch (error) {
+    console.error(error);
+    res.status(500).json(errorResponse('Error searching contacts', [error.message]));
+  }
+};

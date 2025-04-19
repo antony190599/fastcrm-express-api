@@ -79,3 +79,21 @@ export const deleteContact = async (id) => {
     where: { id }
   });
 };
+
+export const searchContacts = async (query) => {
+  return await prisma.contact.findMany({
+    where: {
+      OR: [
+        { firstName: { contains: query, mode: 'insensitive' } },
+        { lastName: { contains: query, mode: 'insensitive' } },
+        { email: { contains: query, mode: 'insensitive' } }
+      ]
+    },
+    include: { company: true },
+    orderBy: [
+      { lastName: 'asc' },
+      { firstName: 'asc' }
+    ],
+    take: 10 // Limit to a reasonable number of results
+  });
+};
