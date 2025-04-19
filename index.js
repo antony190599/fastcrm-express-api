@@ -6,6 +6,7 @@ import { errorHandlerMiddleware } from './middleware/errorHandler.middleware.js'
 import plantillaRoutes from './routes/plantillaRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
 import companyRoutes from './routes/companyRoutes.js';
+import messageRoutes from './routes/messageRoutes.js';
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ mongoose.connect(process.env.MONGO_URI)
 app.use('/api/templates', plantillaRoutes);
 app.use('/api/contacts', contactRoutes);
 app.use('/api/companies', companyRoutes);
+app.use('/api/messages', messageRoutes);
 
 app.get('/', (req, res) => {
   res.send('API funcionando correctamente');
