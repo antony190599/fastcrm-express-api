@@ -13,6 +13,14 @@ export const toCompanyDto = (company) => {
     industry: company.industry,
     website: company.website,
     address: company.address,
+    contacts: company.contacts ? company.contacts.map(contact => ({
+      id: contact.id,
+      firstName: contact.firstName,
+      lastName: contact.lastName,
+      email: contact.email,
+      phone: contact.phone,
+      title: contact.title
+    })) : [],
     createdAt: company.createdAt,
     updatedAt: company.updatedAt
   };

@@ -16,7 +16,8 @@ export const toContactDto = (contact) => {
     companyId: contact.companyId,
     company: contact.company ? {
       id: contact.company.id,
-      name: contact.company.name
+      name: contact.company.name,
+      industry: contact.company.industry
     } : null,
     createdAt: contact.createdAt,
     updatedAt: contact.updatedAt
