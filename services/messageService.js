@@ -4,8 +4,11 @@ import prisma from '../lib/prisma.js';
 
 dotenv.config();
 
+// Destructure environment variables
+const { RESEND_API_KEY, EMAIL_TEST_RECIPIENT } = process.env;
+
 // Initialize Resend with API key
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(RESEND_API_KEY);
 
 /**
  * Send a message via specified channel (WhatsApp or Email)
@@ -51,7 +54,7 @@ export const sendMessage = async (method, contactId, messageData) => {
  */
 const sendEmail = async (contact, messageData) => {
   try {
-    const { subject, content } = messageData;
+    let { subject, content } = messageData;
     
     if (!subject || !content) {
       throw new Error('Email subject and content are required');
@@ -60,11 +63,17 @@ const sendEmail = async (contact, messageData) => {
     if (!contact.email) {
       throw new Error('Contact has no email address');
     }
+
+    if (EMAIL_TEST_RECIPIENT) {
+      console.log(`Sending test email to ${EMAIL_TEST_RECIPIENT}`);
+
+      content += `<br><br>To: ${contact.email}`;
+    }  
     
     // Send email using Resend
     const { data, error } = await resend.emails.send({
       from: 'onboarding@resend.dev',
-      to: contact.email,
+      to: EMAIL_TEST_RECIPIENT ?? contact.email,
       subject: subject,
       html: content,
     });
@@ -121,4 +130,4 @@ const sendWhatsApp = async (contact, messageData) => {
     console.error(`Error sending WhatsApp message: ${error.message}`);
     throw error;
   }
-};
+}
