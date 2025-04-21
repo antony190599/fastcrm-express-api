@@ -7,6 +7,7 @@ import plantillaRoutes from './routes/plantillaRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
 import companyRoutes from './routes/companyRoutes.js';
 import messageRoutes from './routes/messageRoutes.js';
+import metricsRoutes from './routes/metricsRoutes.js';
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.use('/api/templates', plantillaRoutes);
 app.use('/api/contacts', contactRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/metrics', metricsRoutes);
 
 app.get('/', (req, res) => {
   res.send('API funcionando correctamente');

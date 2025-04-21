@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 import dotenv from 'dotenv';
 import prisma from '../lib/prisma.js';
+import MessageHistory from '../models/MessageHistory.js';
 
 dotenv.config();
 
@@ -30,19 +31,73 @@ export const sendMessage = async (method, contactId, messageData) => {
     }
     
     // Choose method based on input
+    let result;
     switch (method.toLowerCase()) {
       case 'email':
-        return await sendEmail(contact, messageData);
+        result = await sendEmail(contact, messageData);
+        break;
       
       case 'whatsapp':
-        return await sendWhatsApp(contact, messageData);
+        result = await sendWhatsApp(contact, messageData);
+        break;
         
       default:
         throw new Error('Invalid message method. Use "email" or "whatsapp"');
     }
+
+    // Track message history
+    await saveMessageHistory(contactId, method, messageData, result);
+    
+    return result;
   } catch (error) {
     console.error(`Error sending message: ${error.message}`);
     throw error;
+  }
+};
+
+/**
+ * Save message to history for tracking and analytics
+ */
+const saveMessageHistory = async (contactId, method, messageData, result) => {
+  try {
+    const { subject, content } = messageData;
+    
+    await MessageHistory.create({
+      contactId,
+      method,
+      subject,
+      content,
+      status: result.success ? 'sent' : 'failed',
+      messageId: result.messageId || null
+    });
+  } catch (error) {
+    console.error('Error saving message history:', error);
+    // Don't throw error here to avoid interrupting the main flow
+  }
+};
+
+/**
+ * Get message metrics for dashboard
+ */
+export const getMessageMetrics = async () => {
+  try {
+    // Get total message count
+    const totalCount = await MessageHistory.countDocuments();
+    
+    // Get count by method
+    const emailCount = await MessageHistory.countDocuments({ method: 'email' });
+    const whatsappCount = await MessageHistory.countDocuments({ method: 'whatsapp' });
+    
+    return {
+      total: totalCount,
+      byMethod: {
+        email: emailCount,
+        whatsapp: whatsappCount
+      }
+    };
+  } catch (error) {
+    console.error('Error fetching message metrics:', error);
+    return { total: 0, byMethod: { email: 0, whatsapp: 0 } };
   }
 };
 
@@ -130,4 +185,4 @@ const sendWhatsApp = async (contact, messageData) => {
     console.error(`Error sending WhatsApp message: ${error.message}`);
     throw error;
   }
-}
+};
