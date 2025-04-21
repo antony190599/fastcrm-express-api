@@ -56,97 +56,27 @@ export const sendMessage = async (method, contactId, messageData) => {
 };
 
 /**
- * Send a message to multiple contacts at once
- * @param {String} method - The message method ('whatsapp' or 'email')
- * @param {Array<String>} contactIds - Array of contact IDs to send messages to
- * @param {Object} messageData - Message content data
- * @returns {Array<Object>} - Results of each send operation
- */
-export const bulkSendMessage = async (method, contactIds, messageData) => {
-  try {
-    // Fetch all contacts at once for efficiency
-    const contacts = await prisma.contact.findMany({
-      where: {
-        id: { in: contactIds }
-      },
-      include: { company: true }
-    });
-    
-    if (contacts.length === 0) {
-      throw new Error('No valid contacts found for the provided IDs');
-    }
-    
-    // Process each contact in parallel with Promise.all
-    const results = await Promise.all(
-      contacts.map(async (contact) => {
-        try {
-          // Choose method based on input
-          let result;
-          switch (method.toLowerCase()) {
-            case 'email':
-              result = await sendEmail(contact, messageData);
-              break;
-            
-            case 'whatsapp':
-              result = await sendWhatsApp(contact, messageData);
-              break;
-              
-            default:
-              throw new Error('Invalid message method. Use "email" or "whatsapp"');
-          }
-          
-          // Track message history
-          await saveMessageHistory(contact.id, method, messageData, result);
-          
-          return {
-            contactId: contact.id,
-            contactName: `${contact.firstName} ${contact.lastName}`,
-            success: true,
-            messageId: result.messageId,
-            method
-          };
-        } catch (error) {
-          console.error(`Error sending message to contact ${contact.id}: ${error.message}`);
-          
-          // Track failed message
-          await saveMessageHistory(contact.id, method, messageData, { success: false });
-          
-          return {
-            contactId: contact.id,
-            contactName: `${contact.firstName} ${contact.lastName}`,
-            success: false,
-            error: error.message,
-            method
-          };
-        }
-      })
-    );
-    
-    return results;
-  } catch (error) {
-    console.error(`Error in bulk message sending: ${error.message}`);
-    throw error;
-  }
-};
-
-/**
  * Save message to history for tracking and analytics
  */
 const saveMessageHistory = async (contactId, method, messageData, result) => {
   try {
     const { subject, content } = messageData;
     
-    await MessageHistory.create({
+    const messageHistory = await MessageHistory.create({
       contactId,
       method,
       subject,
       content,
-      status: result.success ? 'sent' : 'failed',
-      messageId: result.messageId || null
+      status: result && result.success !== false ? 'sent' : 'failed',
+      messageId: result && result.messageId ? result.messageId : null
     });
+    
+    console.log(`Message history saved: ${messageHistory._id}`);
+    return messageHistory;
   } catch (error) {
     console.error('Error saving message history:', error);
-    // Don't throw error here to avoid interrupting the main flow
+    // No lanzamos el error para no interrumpir el flujo principal
+    return null;
   }
 };
 
@@ -155,12 +85,17 @@ const saveMessageHistory = async (contactId, method, messageData, result) => {
  */
 export const getMessageMetrics = async () => {
   try {
-    // Get total message count
-    const totalCount = await MessageHistory.countDocuments();
+    console.log('Fetching message metrics from database...');
     
-    // Get count by method
+    // Obtenemos el conteo total
+    const totalCount = await MessageHistory.countDocuments();
+    console.log(`Total messages found: ${totalCount}`);
+    
+    // Obtenemos el conteo por método
     const emailCount = await MessageHistory.countDocuments({ method: 'email' });
     const whatsappCount = await MessageHistory.countDocuments({ method: 'whatsapp' });
+    
+    console.log(`Email messages: ${emailCount}, WhatsApp messages: ${whatsappCount}`);
     
     return {
       total: totalCount,
@@ -246,14 +181,19 @@ const sendWhatsApp = async (contact, messageData) => {
     // You would implement the real WhatsApp sending logic here
     
     console.log(`Sending WhatsApp message to ${contact.phone}: ${content}`);
+    // Asegúrate de que esta respuesta tenga la misma estructura que la de sendEmail
+    const messageId = `whatsapp-${Date.now()}`;
     
+    // Registra explícitamente el éxito del mensaje
+    console.log(`WhatsApp message sent successfully with ID: ${messageId}`);
     // Mock successful response
     return {
       success: true,
       method: 'whatsapp',
       recipient: contact.phone,
-      messageId: `whatsapp-${Date.now()}`,
-      timestamp: new Date().toISOString()
+      messageId: messageId,
+      timestamp: new Date().toISOString(),
+      data: { id: messageId }
     };
   } catch (error) {
     console.error(`Error sending WhatsApp message: ${error.message}`);
