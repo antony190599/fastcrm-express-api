@@ -56,6 +56,80 @@ export const sendMessage = async (method, contactId, messageData) => {
 };
 
 /**
+ * Send a message to multiple contacts at once
+ * @param {String} method - The message method ('whatsapp' or 'email')
+ * @param {Array<String>} contactIds - Array of contact IDs to send messages to
+ * @param {Object} messageData - Message content data
+ * @returns {Array<Object>} - Results of each send operation
+ */
+export const bulkSendMessage = async (method, contactIds, messageData) => {
+  try {
+    // Fetch all contacts at once for efficiency
+    const contacts = await prisma.contact.findMany({
+      where: {
+        id: { in: contactIds }
+      },
+      include: { company: true }
+    });
+    
+    if (contacts.length === 0) {
+      throw new Error('No valid contacts found for the provided IDs');
+    }
+    
+    // Process each contact in parallel with Promise.all
+    const results = await Promise.all(
+      contacts.map(async (contact) => {
+        try {
+          // Choose method based on input
+          let result;
+          switch (method.toLowerCase()) {
+            case 'email':
+              result = await sendEmail(contact, messageData);
+              break;
+            
+            case 'whatsapp':
+              result = await sendWhatsApp(contact, messageData);
+              break;
+              
+            default:
+              throw new Error('Invalid message method. Use "email" or "whatsapp"');
+          }
+          
+          // Track message history
+          await saveMessageHistory(contact.id, method, messageData, result);
+          
+          return {
+            contactId: contact.id,
+            contactName: `${contact.firstName} ${contact.lastName}`,
+            success: true,
+            messageId: result.messageId,
+            method
+          };
+        } catch (error) {
+          console.error(`Error sending message to contact ${contact.id}: ${error.message}`);
+          
+          // Track failed message
+          await saveMessageHistory(contact.id, method, messageData, { success: false });
+          
+          return {
+            contactId: contact.id,
+            contactName: `${contact.firstName} ${contact.lastName}`,
+            success: false,
+            error: error.message,
+            method
+          };
+        }
+      })
+    );
+    
+    return results;
+  } catch (error) {
+    console.error(`Error in bulk message sending: ${error.message}`);
+    throw error;
+  }
+};
+
+/**
  * Save message to history for tracking and analytics
  */
 const saveMessageHistory = async (contactId, method, messageData, result) => {
