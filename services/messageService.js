@@ -56,6 +56,40 @@ export const sendMessage = async (method, contactId, messageData) => {
 };
 
 /**
+ * Send messages to multiple contacts at once
+ * @param {String} method - Message method (email/whatsapp)
+ * @param {Array<String>} contactIds - Array of contact IDs
+ * @param {Object} messageData - Message content and subject
+ * @returns {Array<Object>} - Results for each contact
+ */
+export const bulkSendMessage = async (method, contactIds, messageData) => {
+  console.log(`Sending ${method} messages to ${contactIds.length} contacts`);
+  
+  const results = [];
+  
+  // Process each contact sequentially to avoid rate limits
+  for (const contactId of contactIds) {
+    try {
+      const result = await sendMessage(method, contactId, messageData);
+      results.push({
+        contactId,
+        success: true,
+        ...result
+      });
+    } catch (error) {
+      console.error(`Failed to send message to contact ${contactId}:`, error.message);
+      results.push({
+        contactId,
+        success: false,
+        error: error.message
+      });
+    }
+  }
+  
+  return results;
+};
+
+/**
  * Save message to history for tracking and analytics
  */
 const saveMessageHistory = async (contactId, method, messageData, result) => {
