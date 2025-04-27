@@ -24,6 +24,7 @@ model Contact {
   updatedAt DateTime @updatedAt
   companyId String?
   company   Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  logs      ContactLog[]
 }
 
 model Company {
@@ -38,3 +39,17 @@ model Company {
   contacts  Contact[]
 }
 
+model ContactLog {
+  id          String   @id @default(uuid())
+  contactId   String
+  contact     Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  timestamp   DateTime @default(now())
+  templateId  String?
+  templateName String?
+  messageId   String?
+  method      String   // email, whatsapp, call, meeting
+  notes       String?
+  status      String   @default("success") // success, pending, failed
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
