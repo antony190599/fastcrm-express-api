@@ -1,254 +1,290 @@
-# FASTCRM-EXPRESS-API1
+# FastCRM API
 
-Fast CRM API developed with Express, Prisma and MongoDB.
+Una API moderna de CRM construida con Express.js, compatible con bases de datos PostgreSQL (mediante Prisma) y MongoDB.
 
-## Features
+## 📋 Tabla de Contenidos
 
-- Contact management
-- Company management
-- Message sending (Email and WhatsApp)
-  - Individual message sending
-  - Bulk message sending to multiple contacts
-  - Template-based messaging
-- Templates management
-- Dashboard metrics
+- [Descripción General](#descripción-general)
+- [Stack Tecnológico](#stack-tecnológico)
+- [Primeros Pasos](#primeros-pasos)
+  - [Requisitos Previos](#requisitos-previos)
+  - [Instalación](#instalación)
+  - [Variables de Entorno](#variables-de-entorno)
+- [Estructura de la Base de Datos](#estructura-de-la-base-de-datos)
+  - [PostgreSQL (Prisma)](#postgresql-prisma)
+  - [MongoDB](#mongodb)
+- [Endpoints de la API](#endpoints-de-la-api)
+  - [Contactos](#contactos)
+  - [Empresas](#empresas)
+  - [Plantillas](#plantillas)
+  - [Mensajes](#mensajes)
+  - [Registros de Contactos](#registros-de-contactos)
+  - [Métricas](#métricas)
+- [Objetos de Transferencia de Datos (DTOs)](#objetos-de-transferencia-de-datos-dtos)
+- [Middleware](#middleware)
+- [Validadores](#validadores)
+- [Capa de Servicios](#capa-de-servicios)
+- [Optimizaciones de Rendimiento](#optimizaciones-de-rendimiento)
+- [Desarrollo](#desarrollo)
+- [Licencia](#licencia)
 
-## Implementación del Dashboard
+## Descripción General
 
-El dashboard proporciona una visión completa de las métricas del sistema usando datos de múltiples fuentes (PostgreSQL y MongoDB).
+FastCRM API es una solución completa de gestión de relaciones con clientes construida para que las empresas puedan gestionar contactos, empresas, plantillas de comunicación y capacidades de mensajería. El sistema presenta un enfoque de doble base de datos utilizando PostgreSQL para datos relacionales estructurados y MongoDB para almacenamiento de documentos más flexible.
 
-### Arquitectura
+## Stack Tecnológico
 
-La implementación del dashboard sigue una arquitectura por capas:
-- **Controladores**: Manejan las peticiones HTTP y respuestas (`metricsController.js`)
-- **Servicios**: Contienen la lógica de negocio y agregación de datos (`metricsService.js`)
-- **Rutas**: Definen los endpoints de la API (`metricsRoutes.js`)
+- **Entorno de ejecución**: Node.js
+- **Framework de API**: Express.js
+- **Bases de Datos**:
+  - **PostgreSQL** (mediante ORM Prisma) - Para datos estructurados (contactos, empresas)
+  - **MongoDB** - Para datos semi-estructurados (plantillas de mensajes, historial de mensajes)
+- **Validación**: express-validator
+- **Integración de Email**: Resend API
+- **Desarrollo**: Nodemon para recarga en caliente
+- **Entorno**: dotenv para gestión de variables de entorno
 
-### Endpoints de la API
+## Primeros Pasos
 
-| Endpoint | Método | Descripción |
-|----------|--------|-------------|
-| `/api/metrics/dashboard` | GET | Obtiene métricas completas del dashboard |
+### Requisitos Previos
 
-### Colección de Métricas
+- Node.js (v16+)
+- NPM o Yarn
+- Base de datos PostgreSQL
+- Base de datos MongoDB
+- Acceso a Resend API (para funcionalidad de email)
 
-El dashboard recolecta métricas de diferentes fuentes de datos:
+### Instalación
 
-1. **Métricas de Contactos y Empresas** (PostgreSQL vía Prisma)
-   - Número total de contactos en el sistema
-   - Número total de empresas en el sistema
-   
-   **Código de consulta en `metricsService.js`**:
-   ```js
-   // Obtener conteo de contactos y empresas de PostgreSQL usando Prisma
-   const [contactCount, companyCount] = await Promise.all([
-     prisma.contact.count(),
-     prisma.company.count()
-   ]);
-   ```
-
-2. **Métricas de Plantillas** (MongoDB vía Mongoose)
-   - Número total de plantillas
-   - Desglose de plantillas por tipo (ej. seguimiento, bienvenida)
-   
-   **Código de consulta en `metricsService.js`**:
-   ```js
-   // Obtener conteo total de plantillas
-   const totalCount = await Plantilla.countDocuments();
-   
-   // Obtener conteo por tipo usando agregación
-   const typeBreakdown = await Plantilla.aggregate([
-     { $group: { _id: "$type", count: { $sum: 1 } } },
-     { $project: { type: "$_id", count: 1, _id: 0 } }
-   ]);
-   ```
-
-3. **Métricas de Mensajes** (MongoDB vía Mongoose)
-   - Total de mensajes enviados
-   - Desglose de mensajes por método (email, WhatsApp)
-   
-   **Código de consulta en `messageService.js`**:
-   ```js
-   // Obtener conteo total de mensajes
-   const totalCount = await MessageHistory.countDocuments();
-   
-   // Obtener conteo por método
-   const emailCount = await MessageHistory.countDocuments({ method: 'email' });
-   const whatsappCount = await MessageHistory.countDocuments({ method: 'whatsapp' });
-   ```
-
-### Detalles de Implementación
-
-#### Flujo de Datos
-
-1. **Ruta**: La petición HTTP llega a través de `metricsRoutes.js`:
-   ```js
-   // Definición de la ruta del dashboard
-   router.get('/dashboard', metricsController.getDashboardMetrics);
-   ```
-
-2. **Controlador**: `metricsController.js` maneja la petición:
-   ```js
-   export const getDashboardMetrics = async (req, res) => {
-     try {
-       const metrics = await metricsService.getDashboardMetrics();
-       res.status(200).json(successResponse(
-         metrics,
-         'Dashboard metrics fetched successfully'
-       ));
-     } catch (error) {
-       console.error('Error in metrics controller:', error);
-       res.status(500).json(errorResponse('Error fetching dashboard metrics', [error.message]));
-     }
-   };
-   ```
-
-3. **Servicio**: `metricsService.js` agrega los datos:
-   ```js
-   export const getDashboardMetrics = async () => {
-     try {
-       // Obtener conteo de contactos y empresas de PostgreSQL vía Prisma
-       const [contactCount, companyCount] = await Promise.all([
-         prisma.contact.count(),
-         prisma.company.count()
-       ]);
-   
-       // Obtener métricas de plantillas de MongoDB
-       const templateMetrics = await getTemplateMetrics();
-   
-       // Obtener métricas de mensajes
-       const messageMetrics = await getMessageMetrics();
-   
-       return {
-         contacts: {
-           total: contactCount
-         },
-         companies: {
-           total: companyCount
-         },
-         templates: templateMetrics,
-         messages: messageMetrics
-       };
-     } catch (error) {
-       console.error('Error fetching dashboard metrics:', error);
-       throw error;
-     }
-   };
-   ```
-
-#### Cálculo de Métricas de Plantillas
-
-El método `getTemplateMetrics` dentro de `metricsService.js` usa MongoDB Aggregation Framework para obtener estadísticas de plantillas:
-
-```js
-const getTemplateMetrics = async () => {
-  try {
-    // Obtener conteo total de plantillas
-    const totalCount = await Plantilla.countDocuments();
-
-    // Obtener conteo por tipo usando agregación
-    const typeBreakdown = await Plantilla.aggregate([
-      { $group: { _id: "$type", count: { $sum: 1 } } },
-      { $project: { type: "$_id", count: 1, _id: 0 } }
-    ]);
-
-    // Convertir a un formato más amigable
-    const byType = {};
-    typeBreakdown.forEach(item => {
-      byType[item.type] = item.count;
-    });
-
-    return {
-      total: totalCount,
-      byType
-    };
-  } catch (error) {
-    console.error('Error fetching template metrics:', error);
-    return { total: 0, byType: {} };
-  }
-};
+1. Clonar el repositorio:
+```bash
+git clone https://github.com/tuusuario/FASTCRM-EXPRESS-API1.git
+cd FASTCRM-EXPRESS-API1
 ```
 
-#### Cálculo de Métricas de Mensajes
-
-El método `getMessageMetrics` dentro de `messageService.js` recolecta estadísticas de envíos de mensajes:
-
-```js
-export const getMessageMetrics = async () => {
-  try {
-    console.log('Fetching message metrics from database...');
-    
-    // Obtenemos el conteo total
-    const totalCount = await MessageHistory.countDocuments();
-    
-    // Obtenemos el conteo por método
-    const emailCount = await MessageHistory.countDocuments({ method: 'email' });
-    const whatsappCount = await MessageHistory.countDocuments({ method: 'whatsapp' });
-    
-    return {
-      total: totalCount,
-      byMethod: {
-        email: emailCount,
-        whatsapp: whatsappCount
-      }
-    };
-  } catch (error) {
-    console.error('Error fetching message metrics:', error);
-    return { total: 0, byMethod: { email: 0, whatsapp: 0 } };
-  }
-};
+2. Instalar dependencias:
+```bash
+npm install
 ```
 
-### Respuesta de Ejemplo
+3. Configurar variables de entorno (ver abajo)
 
-```json
-{
-  "success": true,
-  "message": "Dashboard metrics fetched successfully",
-  "data": {
-    "contacts": {
-      "total": 154
-    },
-    "companies": {
-      "total": 32
-    },
-    "templates": {
-      "total": 28,
-      "byType": {
-        "seguimiento": 18,
-        "bienvenida": 10
-      }
-    },
-    "messages": {
-      "total": 347,
-      "byMethod": {
-        "email": 245,
-        "whatsapp": 102
-      }
-    }
-  }
-}
+4. Ejecutar migraciones de base de datos:
+```bash
+npm run migrate
 ```
 
-### Estructura del Código
+5. Iniciar el servidor:
+```bash
+npm start
+```
 
-- **metricsController.js**: Contiene el controlador `getDashboardMetrics` que formatea las respuestas API
-- **metricsService.js**: Alberga la lógica para obtener y combinar métricas de diferentes fuentes de datos
-- **metricsRoutes.js**: Define el endpoint `/api/metrics/dashboard`
-- **messageService.js**: Contiene la función `getMessageMetrics` utilizada por el servicio de métricas
+Para desarrollo con recarga en caliente:
+```bash
+npm run dev
+```
 
-### Conexión con Bases de Datos
+### Variables de Entorno
 
-- **PostgreSQL** (vía Prisma): Se conecta a través del cliente Prisma inicializado en `lib/prisma.js` para obtener datos de contactos y empresas
-- **MongoDB** (vía Mongoose): Se conecta utilizando los modelos Mongoose definidos para plantillas (`Plantilla.js`) y el historial de mensajes (`MessageHistory.js`)
+Crear un archivo `.env` en el directorio raíz con las siguientes variables:
 
-### Consideraciones de Rendimiento
+```
+PORT=3000
+MONGO_URI=tu_cadena_de_conexion_mongodb
+DATABASE_URL=tu_cadena_de_conexion_postgresql
+RESEND_API_KEY=tu_clave_api_resend
+EMAIL_TEST_RECIPIENT=email_de_prueba_opcional
+```
 
-La implementación utiliza `Promise.all()` para ejecutar consultas de base de datos independientes de forma concurrente, optimizando el tiempo de respuesta. Para conjuntos de datos grandes, el proceso de recopilación de métricas evita cargar registros completos y en su lugar utiliza pipelines de agregación y operaciones de conteo para mayor eficiencia.
+## Estructura de la Base de Datos
 
-Si el tiempo de respuesta se vuelve un problema, se podrían implementar estrategias adicionales como:
+### PostgreSQL (Prisma)
 
-1. Cacheo de métricas con un TTL (tiempo de vida) definido
-2. Cálculo de métricas en segundo plano mediante trabajos programados
-3. Fragmentación de métricas para cargas parciales bajo demanda
+La base de datos relacional maneja datos estructurados incluyendo contactos, empresas y registros de interacción.
 
+#### Modelos:
+
+**Contact (Contacto)**
+- id (UUID)
+- firstName (String, nombre)
+- lastName (String, apellido)
+- email (String, único)
+- phone (String, opcional, teléfono)
+- title (String, opcional, cargo)
+- companyId (UUID, referencia a Empresa)
+- timestamps (createdAt, updatedAt - fechas de creación y actualización)
+
+**Company (Empresa)**
+- id (UUID)
+- name (String, nombre)
+- ruc (String, opcional, RUC)
+- industry (String, opcional, industria)
+- website (String, opcional, sitio web)
+- address (String, opcional, dirección)
+- timestamps (createdAt, updatedAt - fechas de creación y actualización)
+
+**ContactLog (Registro de Contacto)**
+- id (UUID)
+- contactId (UUID, referencia a Contacto)
+- timestamp (DateTime, fecha y hora)
+- templateId (String, opcional, ID de plantilla)
+- templateName (String, opcional, nombre de plantilla)
+- messageId (String, opcional, ID de mensaje)
+- method (String: "email", "whatsapp", "call", "meeting" - método)
+- notes (String, opcional, notas)
+- status (String: "success", "pending", "failed" - éxito, pendiente, fallido)
+- timestamps (createdAt, updatedAt - fechas de creación y actualización)
+
+### MongoDB
+
+La base de datos de documentos almacena datos semi-estructurados flexibles como plantillas de mensajes e historial.
+
+#### Colecciones:
+
+**Plantilla (Template)**
+- _id (ObjectId)
+- type (String, indexado, tipo)
+- content (String, indexado como texto, contenido)
+- labels (Array de String, etiquetas)
+- author (String, autor)
+- createdAt (Date, fecha de creación)
+
+**MessageHistory (Historial de Mensajes)**
+- _id (ObjectId)
+- contactId (String, indexado)
+- method (String: "email" o "whatsapp", indexado, método)
+- subject (String, opcional, asunto)
+- content (String, contenido)
+- status (String: "sent", "failed", "delivered", "read", indexado - enviado, fallido, entregado, leído)
+- messageId (String, opcional)
+- createdAt (Date, indexado, fecha de creación)
+
+## Endpoints de la API
+
+### Contactos
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | /api/contacts | Obtener todos los contactos (con paginación) |
+| GET | /api/contacts/search | Buscar contactos |
+| GET | /api/contacts/:id | Obtener contacto por ID |
+| POST | /api/contacts | Crear un nuevo contacto |
+| PUT | /api/contacts/:id | Actualizar un contacto |
+| DELETE | /api/contacts/:id | Eliminar un contacto |
+
+### Empresas
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | /api/companies | Obtener todas las empresas |
+| GET | /api/companies/:id | Obtener empresa por ID |
+| POST | /api/companies | Crear una nueva empresa |
+| PUT | /api/companies/:id | Actualizar una empresa |
+| DELETE | /api/companies/:id | Eliminar una empresa |
+
+### Plantillas
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | /api/templates | Obtener todas las plantillas (con paginación) |
+| GET | /api/templates/:id | Obtener plantilla por ID |
+| POST | /api/templates | Crear una nueva plantilla |
+| PUT | /api/templates/:id | Actualizar una plantilla |
+| DELETE | /api/templates/:id | Eliminar una plantilla |
+
+### Mensajes
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| POST | /api/messages/:contactId | Enviar un mensaje a un contacto |
+| POST | /api/messages/bulk | Enviar mensajes a múltiples contactos |
+
+### Registros de Contactos
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | /api/contact-logs | Obtener todos los registros de contactos (con paginación) |
+| GET | /api/contact-logs/:id | Obtener registro de contacto por ID |
+| GET | /api/contact-logs/contact/:contactId | Obtener registros para un contacto específico |
+| POST | /api/contact-logs | Crear un nuevo registro de contacto |
+| PUT | /api/contact-logs/:id | Actualizar un registro de contacto |
+| DELETE | /api/contact-logs/:id | Eliminar un registro de contacto |
+
+### Métricas
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | /api/metrics/dashboard | Obtener métricas del panel de control |
+
+## Objetos de Transferencia de Datos (DTOs)
+
+La API utiliza Objetos de Transferencia de Datos para transformar entidades internas de base de datos en formatos de respuesta consistentes:
+
+- **contactDto**: Transforma objetos de base de datos Contact en formato de respuesta
+- **companyDto**: Transforma objetos de base de datos Company en formato de respuesta
+- **contactLogDto**: Transforma objetos de base de datos ContactLog en formato de respuesta
+- **TemplateResponseDTO**: Transforma documentos MongoDB de Template (Plantilla) en formato de respuesta
+
+## Middleware
+
+- **corsMiddleware**: Maneja CORS (Compartición de Recursos de Origen Cruzado)
+- **errorHandlerMiddleware**: Proporciona formato de respuesta de error consistente
+- **requestValidation**: Valida solicitudes entrantes usando express-validator
+
+## Validadores
+
+La validación de entrada es manejada por express-validator con validadores personalizados para cada entidad:
+
+- **contactValidators**: Valida solicitudes relacionadas con contactos
+- **companyValidators**: Valida solicitudes relacionadas con empresas
+- **templatesValidators**: Valida solicitudes relacionadas con plantillas
+- **messageValidators**: Valida solicitudes relacionadas con mensajes
+- **contactLogValidators**: Valida solicitudes relacionadas con registros de contactos
+
+## Capa de Servicios
+
+La lógica de negocio está organizada en módulos de servicio:
+
+- **contactService**: Operaciones relacionadas con contactos
+- **companyService**: Operaciones relacionadas con empresas
+- **plantillaService**: Operaciones relacionadas con plantillas
+- **messageService**: Operaciones de envío de mensajes (email y WhatsApp)
+- **contactLogService**: Operaciones de registros de contactos
+- **metricsService**: Operaciones de análisis y reportes
+
+## Optimizaciones de Rendimiento
+
+- **Indexación de Texto**: Indexación de texto en MongoDB para búsquedas eficientes de plantillas
+- **Optimización de Consultas**: Consultas estructuradas con índices apropiados
+- **Paginación**: Todos los endpoints de listado soportan paginación para limitar la transferencia de datos
+- **Formateo de Respuesta**: Estructura de respuesta consistente con DTOs
+
+## Desarrollo
+
+### Estructura de Código
+
+```
+/
+├── controllers/      # Manejadores de solicitudes
+├── dtos/            # Objetos de Transferencia de Datos
+├── lib/             # Bibliotecas compartidas
+├── middleware/      # Middleware de Express
+├── models/          # Modelos de MongoDB
+├── prisma/          # Esquema y migraciones de Prisma
+├── routes/          # Rutas de Express
+├── services/        # Lógica de negocio
+├── utils/           # Utilidades auxiliares
+├── validator/       # Validadores de solicitudes
+├── .env             # Variables de entorno
+└── index.js         # Punto de entrada de la aplicación
+```
+
+### Scripts
+
+- `npm start`: Iniciar el servidor de producción
+- `npm run dev`: Iniciar el servidor de desarrollo con recarga en caliente
+- `npm run migrate`: Ejecutar migraciones de Prisma
+
+## Licencia
+
+Este proyecto está licenciado bajo la Licencia ISC.
